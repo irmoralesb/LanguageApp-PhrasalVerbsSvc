@@ -1,0 +1,30 @@
+# FastAPI dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+pydantic[email]==2.12.5
+python-multipart>=0.0.6
+setuptools<70
+importlib-metadata>=4.11
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Database
+sqlalchemy>=2.0.45
+pyodbc>=5.3.0
+aioodbc>=0.5.0
+alembic>=1.13.0
+
+# Authentication & Security
+passlib==1.7.4
+bcrypt==4.0.1
+PyJWT==2.10.1
+
+# Observability - Azure Monitor (Application Insights)
+opentelemetry-api==1.24.0
+opentelemetry-sdk==1.24.0
+opentelemetry-instrumentation-fastapi==0.45b0
+opentelemetry-instrumentation-sqlalchemy==0.45b0
+azure-monitor-opentelemetry==1.4.0
