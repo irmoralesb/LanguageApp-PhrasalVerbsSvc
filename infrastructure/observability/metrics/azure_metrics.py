@@ -19,7 +19,7 @@ _counter_security_events = None
 
 def init_azure_metrics(
     connection_string: str,
-    service_name: str = "service",
+    service_name: str = "MISSING-SERVICENAME",
     export_interval_seconds: int = 60,
 ) -> None:
     """

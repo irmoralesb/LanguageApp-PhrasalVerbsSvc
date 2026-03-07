@@ -83,7 +83,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=app_settings.service_name,
-    description="Microservice built from the Python WebAPI Template",
+    description="LanguageApp Phrasal Verbs API – English phrasal verbs service",
     version="1.0.0",
     lifespan=lifespan,
 )

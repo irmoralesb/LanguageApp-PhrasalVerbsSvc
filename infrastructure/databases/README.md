@@ -1,6 +1,6 @@
 # Database Infrastructure
 
-FastAPI-based microservice using SQLAlchemy 2.x with async sessions and SQL Server 2022 as the backing store.
+LanguageApp Phrasal Verbs service – FastAPI-based microservice using SQLAlchemy 2.x with async sessions and SQL Server 2022 as the backing store.
 
 ## Database drivers
 
