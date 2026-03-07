@@ -1,6 +1,6 @@
-# MicroservicesLab - Python WebAPI Template
+# LanguageApp-PhrasalVerbs
 
-A reusable template for building Python-based web APIs with FastAPI. Provides infrastructure scaffolding (database, observability, repository pattern), JWT-based authentication and role-based authorization, and a sample CRUD entity demonstrating all conventions.
+LanguageApp Phrasal Verbs API – English phrasal verbs microservice. Built with FastAPI, SQLAlchemy, and the same infrastructure patterns (database, observability, repository, JWT auth) as the LanguageApp backend.
 
 ## Project Structure
 
@@ -37,11 +37,9 @@ A reusable template for building Python-based web APIs with FastAPI. Provides in
 
 ## Getting Started
 
-### 1. Create a New Service from This Template
+### 1. Service registration
 
-1. Copy or fork this repository.
-2. Rename references to the sample entity (`Item`) with your own domain entities.
-3. Update `SERVICE_NAME` and `SERVICE_ID` in your environment to match your service registration in the Identity Service.
+Set `SERVICE_NAME` and `SERVICE_ID` in your environment to match your service registration in the LanguageApp Identity Service (e.g. `phrasal-verbs`).
 
 ### 2. Environment Setup
 

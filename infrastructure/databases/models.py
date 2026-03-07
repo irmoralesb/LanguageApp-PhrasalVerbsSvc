@@ -26,3 +26,4 @@ class ItemDataModel(Base):
         DATETIME2(precision=6), server_default=func.sysutcdatetime(), nullable=False)
     updated_at: Mapped[datetime.datetime] = mapped_column(
         DATETIME2(precision=6), server_default=func.sysutcdatetime(), nullable=False)
+
