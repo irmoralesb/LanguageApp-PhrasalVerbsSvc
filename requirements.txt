@@ -22,6 +22,10 @@ passlib==1.7.4
 bcrypt==4.0.1
 PyJWT==2.10.1
 
+# LLM Providers
+openai>=1.30.0
+anthropic>=0.30.0
+
 # Observability - Azure Monitor (Application Insights)
 opentelemetry-api==1.24.0
 opentelemetry-sdk==1.24.0

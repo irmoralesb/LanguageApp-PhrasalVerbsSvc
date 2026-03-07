@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  phrasal-verbs-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD:-YourStrong!Passw0rd}"
+    ports:
+      - "1433:1433"
+    volumes:
+      - phrasal-verbs-data:/var/opt/mssql
+    networks:
+      - phrasal-verbs-net
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${SA_PASSWORD:-YourStrong!Passw0rd}" -Q "SELECT 1" -C -b
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  phrasal-verbs-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8001:80"
+    depends_on:
+      phrasal-verbs-db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: "mssql+aioodbc://sa:${SA_PASSWORD:-YourStrong!Passw0rd}@phrasal-verbs-db:1433/PhrasalVerbsDB?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=yes&LongAsMax=Yes"
+      DATABASE_MIGRATION_URL: "mssql+pyodbc://sa:${SA_PASSWORD:-YourStrong!Passw0rd}@phrasal-verbs-db:1433/PhrasalVerbsDB?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=yes&LongAsMax=Yes"
+    networks:
+      - phrasal-verbs-net
+
+volumes:
+  phrasal-verbs-data:
+
+networks:
+  phrasal-verbs-net:

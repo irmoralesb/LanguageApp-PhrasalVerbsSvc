@@ -126,6 +126,31 @@ class Settings(BaseSettings):
         description="Enable console export of traces for debugging",
     )
 
+    # LLM Configuration
+    llm_provider: str = Field(
+        default="openai",
+        description="LLM provider to use: 'openai' or 'anthropic'",
+    )
+    llm_api_key: str = Field(
+        default="",
+        description="API key for the selected LLM provider",
+    )
+    llm_model: str = Field(
+        default="gpt-4o",
+        description="Model name (e.g. gpt-4o, claude-sonnet-4-20250514)",
+    )
+    llm_max_tokens: int = Field(
+        default=1024,
+        description="Max tokens for LLM responses",
+        gt=0,
+    )
+    llm_temperature: float = Field(
+        default=0.7,
+        description="Temperature for LLM generation (0.0 to 2.0)",
+        ge=0.0,
+        le=2.0,
+    )
+
     # Service Configuration
     service_id: uuid.UUID = Field(
         description="Id of this microservice for RBAC scoping and tracing"
