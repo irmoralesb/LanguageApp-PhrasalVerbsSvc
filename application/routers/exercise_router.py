@@ -17,7 +17,7 @@ from application.schemas.exercise_schema import (
 router = APIRouter(
     prefix="/api/v1/exercises",
     tags=["Exercises"],
-    dependencies=[Depends(require_role("phrasalverb-user"))],
+    dependencies=[Depends(require_role("phrasalverbs-user"))],
 )
 
 

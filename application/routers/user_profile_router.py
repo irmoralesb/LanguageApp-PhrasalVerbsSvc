@@ -19,7 +19,7 @@ from application.schemas.user_profile_schema import (
 router = APIRouter(
     prefix="/api/v1/profile",
     tags=["User Profile"],
-    dependencies=[Depends(require_role("phrasalverb-user"))],
+    dependencies=[Depends(require_role("phrasalverbs-user"))],
 )
 
 

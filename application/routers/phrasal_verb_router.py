@@ -20,12 +20,12 @@ router = APIRouter(
 )
 
 
-# --- User endpoints (phrasalverb-user role) ---
+# --- User endpoints (phrasalverbs-user role) ---
 
 @router.get(
     "/catalog",
     response_model=list[PhrasalVerbResponse],
-    dependencies=[Depends(require_role("phrasalverb-user"))],
+    dependencies=[Depends(require_role("phrasalverbs-user"))],
 )
 async def get_catalog(
     svc: PhrasalVerbSvcDep,
@@ -40,7 +40,7 @@ async def get_catalog(
 @router.get(
     "/{phrasal_verb_id}",
     response_model=PhrasalVerbResponse,
-    dependencies=[Depends(require_role("phrasalverb-user"))],
+    dependencies=[Depends(require_role("phrasalverbs-user"))],
 )
 async def get_phrasal_verb(
     phrasal_verb_id: UUID,
@@ -55,7 +55,7 @@ async def get_phrasal_verb(
     "/custom",
     response_model=PhrasalVerbResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_role("phrasalverb-user"))],
+    dependencies=[Depends(require_role("phrasalverbs-user"))],
 )
 async def create_custom_verb(
     payload: PhrasalVerbCreate,

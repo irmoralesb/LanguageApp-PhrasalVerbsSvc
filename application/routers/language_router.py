@@ -10,7 +10,7 @@ from application.schemas.language_schema import LanguageResponse
 router = APIRouter(
     prefix="/api/v1/languages",
     tags=["Languages"],
-    dependencies=[Depends(require_role("phrasalverb-user"))],
+    dependencies=[Depends(require_role("phrasalverbs-user"))],
 )
 
 

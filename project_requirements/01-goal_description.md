@@ -79,5 +79,5 @@ The PhrasalVerbSvc will help users to learn phrasal verbs in English.
 
 * The webapi service will grant access to authenticated users
 * Endpoints that handle user management or service management actions must be restricted to administrator role (use the one defined in the identity service)
-* Other endpoinst must validate the user has phrasalverb-user role
+* Other endpoinst must validate the user has phrasalverbs-user role
 * Log any security activity in the service using Azure services.
