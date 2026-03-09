@@ -57,8 +57,7 @@ async def get_monitored_db_session():
     session = AsyncSessionLocal()
     try:
         yield session
-        if session.new or session.dirty or session.deleted:
-            await session.commit()
+        await session.commit()
     except Exception:
         await session.rollback()
         raise

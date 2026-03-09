@@ -14,8 +14,22 @@ from domain.exceptions.auth_errors import (
     MissingRoleError,
     UnauthorizedUserError,
 )
-from domain.exceptions.item_errors import ItemNotFoundError, ItemAlreadyExistsError
-from application.routers import item_router
+from domain.exceptions.phrasal_verb_errors import (
+    PhrasalVerbNotFoundError,
+    PhrasalVerbAlreadyExistsError,
+)
+from domain.exceptions.user_profile_errors import (
+    UserProfileNotFoundError,
+    UserProfileAlreadyExistsError,
+    LanguageNotFoundError,
+)
+from domain.exceptions.exercise_errors import ExerciseGenerationError, LLMProviderError
+from application.routers import (
+    language_router,
+    phrasal_verb_router,
+    user_profile_router,
+    exercise_router,
+)
 from infrastructure.observability.logging.azure_handler import (
     setup_azure_handler,
     get_structured_logger,
@@ -35,7 +49,6 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Verbose startup: log config and verify database connection."""
     logger.info("=" * 60)
     logger.info("%s starting (verbose startup)", app_settings.service_name)
     logger.info("=" * 60)
@@ -47,6 +60,7 @@ async def lifespan(app: FastAPI):
     logger.info("[Startup] CORS origins: %s", cors_preview)
     logger.info("[Startup] Service ID: %s", app_settings.service_id)
     logger.info("[Startup] Service Name: %s", app_settings.service_name)
+    logger.info("[Startup] LLM Provider: %s / Model: %s", app_settings.llm_provider, app_settings.llm_model)
     azure_cs = app_settings.applicationinsights_connection_string
     logger.info("[Startup] Observability - Azure Monitor: %s (logging: %s, tracing: %s, metrics: %s)",
                 "enabled" if azure_cs else "disabled",
@@ -102,6 +116,8 @@ app.add_middleware(
 )
 
 
+# --- Exception handlers ---
+
 @app.exception_handler(MissingPermissionError)
 async def permission_exception_handler(request, exc: MissingPermissionError):
     return JSONResponse(
@@ -133,19 +149,59 @@ async def unauthorized_exception_handler(request, exc: UnauthorizedUserError):
     )
 
 
-@app.exception_handler(ItemNotFoundError)
-async def item_not_found_exception_handler(request, exc: ItemNotFoundError):
+@app.exception_handler(PhrasalVerbNotFoundError)
+async def phrasal_verb_not_found_handler(request, exc: PhrasalVerbNotFoundError):
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
         content={"detail": str(exc)}
     )
 
 
-@app.exception_handler(ItemAlreadyExistsError)
-async def item_already_exists_exception_handler(request, exc: ItemAlreadyExistsError):
+@app.exception_handler(PhrasalVerbAlreadyExistsError)
+async def phrasal_verb_exists_handler(request, exc: PhrasalVerbAlreadyExistsError):
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": str(exc)}
+    )
+
+
+@app.exception_handler(UserProfileNotFoundError)
+async def profile_not_found_handler(request, exc: UserProfileNotFoundError):
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content={"detail": str(exc)}
+    )
+
+
+@app.exception_handler(UserProfileAlreadyExistsError)
+async def profile_exists_handler(request, exc: UserProfileAlreadyExistsError):
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)}
+    )
+
+
+@app.exception_handler(LanguageNotFoundError)
+async def language_not_found_handler(request, exc: LanguageNotFoundError):
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content={"detail": str(exc)}
+    )
+
+
+@app.exception_handler(ExerciseGenerationError)
+async def exercise_generation_handler(request, exc: ExerciseGenerationError):
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": exc.detail}
+    )
+
+
+@app.exception_handler(LLMProviderError)
+async def llm_provider_handler(request, exc: LLMProviderError):
+    return JSONResponse(
+        status_code=status.HTTP_502_BAD_GATEWAY,
+        content={"detail": exc.detail, "provider": exc.provider}
     )
 
 
@@ -224,7 +280,11 @@ else:
     logger.info("Azure Monitor observability disabled (no connection string)")
 
 
-app.include_router(item_router.router)
+# --- Routers ---
+app.include_router(language_router.router)
+app.include_router(phrasal_verb_router.router)
+app.include_router(user_profile_router.router)
+app.include_router(exercise_router.router)
 
 
 @app.get("/")
