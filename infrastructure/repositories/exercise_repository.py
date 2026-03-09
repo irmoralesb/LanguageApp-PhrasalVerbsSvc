@@ -63,8 +63,8 @@ class ExerciseRepository(ExerciseRepositoryInterface):
                 ExerciseResultDataModel.phrasal_verb_id,
                 PhrasalVerbDataModel.verb,
                 PhrasalVerbDataModel.particle,
-                func.sum(case((ExerciseResultDataModel.is_correct.is_(True), 1), else_=0)).label("correct_count"),
-                func.sum(case((ExerciseResultDataModel.is_correct.is_(False), 1), else_=0)).label("incorrect_count"),
+                func.sum(case((ExerciseResultDataModel.is_correct == True, 1), else_=0)).label("correct_count"),
+                func.sum(case((ExerciseResultDataModel.is_correct == False, 1), else_=0)).label("incorrect_count"),
             )
             .join(PhrasalVerbDataModel, ExerciseResultDataModel.phrasal_verb_id == PhrasalVerbDataModel.id)
             .where(ExerciseResultDataModel.user_id == user_id)

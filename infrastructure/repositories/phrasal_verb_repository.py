@@ -34,7 +34,7 @@ class PhrasalVerbRepository(PhrasalVerbRepositoryInterface):
     async def get_catalog(self, skip: int = 0, limit: int = 100) -> list[PhrasalVerbModel]:
         result = await self.db.execute(
             select(PhrasalVerbDataModel)
-            .where(PhrasalVerbDataModel.is_catalog.is_(True))
+            .where(PhrasalVerbDataModel.is_catalog == True)
             .order_by(PhrasalVerbDataModel.verb, PhrasalVerbDataModel.particle)
             .offset(skip)
             .limit(limit)
@@ -48,7 +48,7 @@ class PhrasalVerbRepository(PhrasalVerbRepositoryInterface):
         result = await self.db.execute(
             select(PhrasalVerbDataModel)
             .where(
-                PhrasalVerbDataModel.is_catalog.is_(False),
+                PhrasalVerbDataModel.is_catalog == False,
                 PhrasalVerbDataModel.created_by_user_id == user_id,
             )
             .order_by(PhrasalVerbDataModel.verb)

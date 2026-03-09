@@ -11,6 +11,7 @@ from infrastructure.llm.prompts import (
     EXERCISE_EVALUATION_SYSTEM,
     build_exercise_prompt,
     build_evaluation_prompt,
+    strip_code_fence,
 )
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class AnthropicProvider(LLMProviderInterface):
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
             )
-            content = response.content[0].text
+            content = strip_code_fence(response.content[0].text)
             data = json.loads(content)
 
             return ExercisePrompt(
@@ -86,7 +87,7 @@ class AnthropicProvider(LLMProviderInterface):
                 max_tokens=self.max_tokens,
                 temperature=0.3,
             )
-            content = response.content[0].text
+            content = strip_code_fence(response.content[0].text)
             data = json.loads(content)
 
             return ExerciseEvaluation(

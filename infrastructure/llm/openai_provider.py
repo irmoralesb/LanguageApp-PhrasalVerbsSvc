@@ -11,6 +11,7 @@ from infrastructure.llm.prompts import (
     EXERCISE_EVALUATION_SYSTEM,
     build_exercise_prompt,
     build_evaluation_prompt,
+    strip_code_fence,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ class OpenAIProvider(LLMProviderInterface):
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
             )
-            content = response.choices[0].message.content or ""
+            content = strip_code_fence(response.choices[0].message.content or "")
             data = json.loads(content)
 
             return ExercisePrompt(
@@ -90,7 +91,7 @@ class OpenAIProvider(LLMProviderInterface):
                 max_tokens=self.max_tokens,
                 temperature=0.3,
             )
-            content = response.choices[0].message.content or ""
+            content = strip_code_fence(response.choices[0].message.content or "")
             data = json.loads(content)
 
             return ExerciseEvaluation(

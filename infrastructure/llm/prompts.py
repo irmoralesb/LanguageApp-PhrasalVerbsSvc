@@ -1,3 +1,14 @@
+import re
+
+_FENCE_RE = re.compile(r"^\s*```(?:json)?\s*\n?(.*?)\n?\s*```\s*$", re.DOTALL)
+
+
+def strip_code_fence(text: str) -> str:
+    """Remove markdown code fences (```json ... ```) that LLMs sometimes wrap around JSON."""
+    m = _FENCE_RE.match(text)
+    return m.group(1).strip() if m else text.strip()
+
+
 EXERCISE_GENERATION_SYSTEM = (
     "You are a language teaching assistant that creates phrasal verb exercises. "
     "You MUST respond with valid JSON only, no markdown fences, no extra text."

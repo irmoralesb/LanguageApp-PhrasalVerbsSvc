@@ -41,7 +41,7 @@ class LanguageRepository(LanguageRepositoryInterface):
     async def get_target_languages(self) -> list[LanguageModel]:
         result = await self.db.execute(
             select(LanguageDataModel)
-            .where(LanguageDataModel.is_target_language.is_(True))
+            .where(LanguageDataModel.is_target_language == True)
             .order_by(LanguageDataModel.name)
         )
         return [self._to_domain(r) for r in result.scalars().all()]
@@ -52,7 +52,7 @@ class LanguageRepository(LanguageRepositoryInterface):
     async def get_native_languages(self) -> list[LanguageModel]:
         result = await self.db.execute(
             select(LanguageDataModel)
-            .where(LanguageDataModel.is_native_language.is_(True))
+            .where(LanguageDataModel.is_native_language == True)
             .order_by(LanguageDataModel.name)
         )
         return [self._to_domain(r) for r in result.scalars().all()]
