@@ -33,8 +33,10 @@ ENV
 # Tests and dev docs (not needed in production image)
 test_*.py
 TODO.md
+TEMPO_IMPLEMENTATION.md
 *.md
 !README.md
+*.log
 
 # Plan and misc
 .cursor
