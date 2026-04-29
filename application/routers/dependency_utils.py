@@ -51,25 +51,14 @@ def get_exercise_repository(db: Annotated[AsyncSession, Depends(get_db_session)]
 # --- LLM provider ---
 
 def get_llm_provider() -> LLMProviderInterface:
-    provider_name = app_settings.llm_provider.lower()
-    if provider_name == "openai":
-        from infrastructure.llm.openai_provider import OpenAIProvider
-        return OpenAIProvider(
-            api_key=app_settings.llm_api_key,
-            model=app_settings.llm_model,
-            max_tokens=app_settings.llm_max_tokens,
-            temperature=app_settings.llm_temperature,
-        )
-    elif provider_name == "anthropic":
-        from infrastructure.llm.anthropic_provider import AnthropicProvider
-        return AnthropicProvider(
-            api_key=app_settings.llm_api_key,
-            model=app_settings.llm_model,
-            max_tokens=app_settings.llm_max_tokens,
-            temperature=app_settings.llm_temperature,
-        )
-    else:
-        raise ValueError(f"Unsupported LLM provider: {provider_name}")
+    from infrastructure.llm.langchain_provider import LangChainProvider
+    return LangChainProvider(
+        provider=app_settings.llm_provider,
+        api_key=app_settings.llm_api_key,
+        model=app_settings.llm_model,
+        max_tokens=app_settings.llm_max_tokens,
+        temperature=app_settings.llm_temperature,
+    )
 
 
 # --- Service providers ---
