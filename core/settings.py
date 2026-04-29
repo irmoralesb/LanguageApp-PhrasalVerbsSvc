@@ -129,7 +129,11 @@ class Settings(BaseSettings):
     # LLM Configuration
     llm_provider: str = Field(
         default="openai",
-        description="LLM provider to use: 'openai' or 'anthropic'",
+        description=(
+            "LLM provider to use — any value supported by LangChain's init_chat_model "
+            "(e.g. 'openai', 'anthropic', 'google-genai', 'mistralai'). "
+            "The corresponding 'langchain-<provider>' package must be installed."
+        ),
     )
     llm_api_key: str = Field(
         default="",
