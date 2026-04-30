@@ -1,156 +1,150 @@
-# LanguageApp-PhrasalVerbs
+# LanguageApp Phrasal Verbs Service
 
-LanguageApp Phrasal Verbs API – English phrasal verbs microservice. Built with FastAPI, SQLAlchemy, and the same infrastructure patterns (database, observability, repository, JWT auth) as the LanguageApp backend.
+Backend API for **phrasal verb catalog**, **user learning profiles**, **languages**, and **generated writing exercises**. Generation and grading use an **LLM** behind a **provider abstraction** (**LangChain** `init_chat_model`).
 
-## CI/CD and Docker
+It is a consumer of the **Identity Service**: callers send **JWT access tokens** issued there. The **`service_name`** in settings must align with **`roles`** claim keys produced by Identity so **RBAC** works.
 
-Docker images are built and pushed to **Docker Hub** by GitHub Actions when you push a **tag**. The environment (Prod vs Test) is determined by **which branch contains the tag's commit**:
-
-- **Tag's commit on `main`** → **Prod** image is built and pushed (image tag + `latest`).
-- **Tag's commit on `test`** → **Test** image is built and pushed (image tag only).
-- If the commit is on both branches, **Prod** is used (main takes precedence). If on neither, the workflow is skipped.
-
-### GitHub secrets (required)
-
-In the repo **Settings → Secrets and variables → Actions**, add:
-
-- **`DOCKERHUB_USERNAME`** – your Docker Hub username.
-- **`DOCKERHUB_TOKEN`** – a Docker Hub access token (Account → Security → New Access Token, Read & Write).
-
-### Docker Hub and workflow config
-
-- Create a repository on Docker Hub (e.g. `languageapp-phrasal-verbs`). The workflow uses the repo name set in [.github/workflows/build-and-push-docker.yml](.github/workflows/build-and-push-docker.yml) (`DOCKER_IMAGE_REPO`); change it if your repo name differs.
-- After a tag push, the image is available as `$DOCKERHUB_USERNAME/$DOCKER_IMAGE_REPO:<tag>` (and `:latest` for Prod).
-
-### Azure Web Apps
-
-- **Prod:** Use image `youruser/languageapp-phrasal-verbs:latest` or a specific tag (e.g. `:v1.0.0`).
-- **Test:** Use image `youruser/languageapp-phrasal-verbs:<test-tag>` (e.g. a tag pushed from the `test` branch).
-
-See **Environment Setup** and **Docker** below for required env vars and run instructions.
-
-## Project Structure
-
-```
-├── main.py                        # FastAPI application entry point
-├── requirements.txt               # Python dependencies
-├── Dockerfile                     # Production Docker image (Python 3.12 + ODBC)
-├── alembic.ini                    # Alembic migration configuration
-├── .env_template                  # Environment variable template
-│
-├── alembic/                       # Database migrations
-│   ├── env.py
-│   └── versions/
-│
-├── core/                          # Cross-cutting concerns
-│   ├── settings.py                # Pydantic BaseSettings (env vars, validation)
-│   └── security.py                # Password hashing utilities (bcrypt)
-│
-├── domain/                        # Domain layer (no infrastructure dependencies)
-│   ├── entities/                  # Domain models (dataclasses)
-│   ├── exceptions/                # Domain-specific exceptions
-│   └── interfaces/                # Repository interfaces (ABC)
-│
-├── application/                   # Application layer
-│   ├── routers/                   # FastAPI routers + dependency injection
-│   ├── schemas/                   # Pydantic request/response schemas
-│   └── services/                  # Application services (use cases)
-│
-└── infrastructure/                # Infrastructure layer
-    ├── databases/                 # Async SQLAlchemy engine, ORM models
-    ├── repositories/              # Repository implementations
-    └── observability/             # Azure Monitor: logging, tracing, metrics
-```
-
-## Getting Started
-
-### 1. Service registration
-
-Set `SERVICE_NAME` and `SERVICE_ID` in your environment to match your service registration in the LanguageApp Identity Service (e.g. `phrasal-verbs`).
-
-### 2. Environment Setup
-
-Copy `.env_template` to `.env` and fill in the values:
-
-```bash
-cp .env_template .env
-```
-
-**Required environment variables:**
-
-| Variable | Description |
-|---|---|
-| `DATABASE_URL` | Async SQLAlchemy URL for runtime (aioodbc) |
-| `DATABASE_MIGRATION_URL` | Sync SQLAlchemy URL for Alembic migrations (pyodbc) |
-| `SECRET_TOKEN_KEY` | Shared secret for JWT token verification (min 32 chars) |
-| `AUTH_ALGORITHM` | JWT algorithm (e.g., `HS256`) |
-| `TOKEN_TIME_DELTA_IN_MINUTES` | Token expiration in minutes |
-| `TOKEN_URL` | Token endpoint path (e.g., `/token`) |
-| `SERVICE_ID` | UUID of this service (for RBAC scoping) |
-| `SERVICE_NAME` | Name of this service (must match Identity Service registration) |
-
-**Optional (Azure Monitor):**
-
-| Variable | Description |
-|---|---|
-| `APPLICATIONINSIGHTS_CONNECTION_STRING` | Application Insights connection string |
-| `AZURE_LOGGING_ENABLED` | Send logs to Azure Monitor (default: `true`) |
-| `AZURE_TRACING_ENABLED` | Send traces to Azure Monitor (default: `true`) |
-| `AZURE_METRICS_ENABLED` | Send metrics to Azure Monitor (default: `true`) |
-
-### 3. Database Migrations
-
-```bash
-# Create a new migration
-alembic revision --autogenerate -m "description of changes"
-
-# Apply migrations
-alembic upgrade head
-```
-
-### 4. Run Locally
-
-```bash
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
-
-### 5. Docker
-
-```bash
-docker build -t my-service:latest .
-docker run -p 8000:80 --env-file .env my-service:latest
-```
+---
 
 ## Architecture
 
-This template follows a layered architecture with clear separation of concerns:
+Layers mirror the Identity service (**routers → schemas → services → repositories**) with extras for **JWT claim parsing** (no duplicate user DB) and **LLM prompts**.
 
-- **Domain Layer**: Pure business logic with no infrastructure dependencies. Contains entities (dataclasses), repository interfaces (ABCs), and domain exceptions.
-- **Application Layer**: Orchestrates use cases. Contains routers (FastAPI endpoints), services (business workflows), schemas (Pydantic models), and dependency injection wiring.
-- **Infrastructure Layer**: Technical implementations. Contains database engine/ORM models, repository implementations (SQLAlchemy), and observability (Azure Monitor).
-- **Core**: Cross-cutting utilities shared across layers (settings, security).
-
-## Authentication & Authorization
-
-This template consumes JWT tokens issued by the **Identity Service**. It does not create tokens.
-
-- Tokens are decoded from the `Authorization: Bearer <token>` header.
-- User identity and roles are extracted from JWT claims (no database lookup required).
-- Role-based access control is enforced via the `require_role("role_name")` dependency.
-
-```python
-from application.routers.dependency_utils import require_role, CurrentUserDep
-
-@router.get("", dependencies=[Depends(require_role("admin"))])
-async def admin_only_endpoint(current_user: CurrentUserDep):
-    ...
+```mermaid
+flowchart TB
+    subgraph clients["Clients"]
+        Web["LanguageApp-Web"]
+    end
+    subgraph phrasal["Phrasal Verbs Service"]
+        subgraph api["application"]
+            R["FastAPI routers\n(e.g. /api/v1/...)"]
+            SCH["Pydantic schemas"]
+        end
+        subgraph app_svc["application/services"]
+            PV["PhrasalVerbCatalogService"]
+            UP["UserProfileService"]
+            EX["ExerciseService\n(+ LLM)"]
+            AUTHZ["AuthorizationService\n(roles from JWT)"]
+            TS["TokenService\nJWT decode → UserClaims"]
+        end
+        subgraph infra["infrastructure"]
+            REP["Repositories"]
+            LLM["LangChainProvider\n(impl of LLMProviderInterface)"]
+            DB[("Azure SQL /\nMicrosoft SQL Server")]
+            AZ["Azure Monitor\n(logging, traces, metrics)"]
+        end
+        R --> SCH --> PV
+        R --> EX
+        REP --> DB
+        EX --> LLM
+        R --> AZ
+        TS -.-> AUTHZ
+    end
+    Id["Identity Service\nJWT mint"] -.->|"same SECRET"| TS
+    Web -->|"Bearer JWT"| phrasal
 ```
 
-## Health Check
+**JWT flow**
 
-`GET /health` returns `{"status": "ok"}` for load balancer probes.
+1. **`TokenService`** decodes Bearer tokens (**`secret_token_key`** and **`auth_algorithm`** must match Identity).
+2. **`UserClaims`** holds **`roles`**: **`{ "<service-name>": ["role1", ...] }`**.
+3. **`AuthorizationService`** reads **`service_name`** from settings and validates required roles (`check_role`, etc.).
 
-## License
+**Exercise generation**
 
-MIT License - see [LICENSE](LICENSE) for details.
+Prompts live in **`infrastructure/llm/prompts.py`**. **`LangChainProvider`** uses **`structured_output`** to force JSON-aligned results for **`ExercisePrompt`** / **`ExerciseEvaluation`**.
+
+---
+
+## Patterns in this codebase
+
+| Area | Pattern |
+| --- | --- |
+| **Routing** | `APIRouter` modules under **`application/routers/`** (**`dependency_utils.py`** — shared `Depends()` for **`TokenService`**, **`AuthorizationService`**, DB session, repos). |
+| **Validation** | Pydantic v2 models under **`application/schemas/`** (e.g. **`ExerciseRequest`**, **`ExercisePromptResponse`**). |
+| **Domain** | Entities and repository **interfaces** under **`domain/`**; infrastructure implements those interfaces (`exercise_repository`, etc.). |
+| **JWT** | **Decode-only** — no user table sync; aligns with **`domain/entities/token_claims.UserClaims`**. |
+| **LLM** | **`LLMProviderInterface`** (**`domain/interfaces/llm_provider.py`**) implemented by **`infrastructure.llm.langchain_provider.LangChainProvider`**. Extend by installing **`langchain-<provider>`** and setting **`LLM_*`** env vars (see **`.env_template`**). |
+| **Persistence** | Async SQLAlchemy + **Azure SQL/SQL Server** via **`create_async_engine`** (**`DATABASE_URL`**). **`LongAsMax=Yes`** is appended automatically for ODBC compatibility. |
+| **Observability** | **`azure-monitor-opentelemetry`**, custom Azure handlers/metrics decorators under **`infrastructure/observability/`**. |
+
+---
+
+## Prerequisites
+
+- **Python** 3.11+.
+- **Azure SQL / SQL Server** with ODBC (**Driver 18**).
+- **`LLM_API_KEY`** and network access for the chosen **`LLM_PROVIDER`** (OpenAI, Anthropic, etc., per **`requirements.txt`**).
+- Matching **JWT signing** configuration as **Identity**: **`SECRET_TOKEN_KEY`**, **`AUTH_ALGORITHM`**.
+- **`SERVICE_ID`** and **`SERVICE_NAME`** registered consistently in Identity (service catalog / RBAC).
+
+---
+
+## Configuration
+
+Copy **`.env_template`** to **`.env`**. **`load_dotenv()`** runs before **`core.settings`** in **`main.py`**.
+
+Critical keys are documented inline in **`core/settings.py`**. Highlights:
+
+| Variable | Purpose |
+| --- | --- |
+| **`DATABASE_URL`** | Async **`mssql+aioodbc://...`** for the app |
+| **`DATABASE_MIGRATION_URL`** | Sync **`mssql+pyodbc://...`** for Alembic |
+| **`SECRET_TOKEN_KEY`**, **`AUTH_ALGORITHM`** | Must match Identity for JWT verification |
+| **`SERVICE_ID`**, **`SERVICE_NAME`** | Must match Identity’s service registry and JWT role keys |
+| **`LLM_*`** | Provider, API key, model, temperature |
+
+For Azure-hosted apps, **`SQLCONNSTR_*`**-style overrides are supported (**`model_validator`** in **`settings.py`**) akin to Identity.
+
+---
+
+## Database setup and migrations
+
+1. Create the target database on SQL Server/Azure SQL.
+
+2. Point **`DATABASE_MIGRATION_URL`** (Alembic) and **`DATABASE_URL`** (runtime) per **`.env_template`**.
+
+3. From repo root:
+
+   ```bash
+   alembic upgrade head
+   ```
+
+Alembic uses **`DATABASE_MIGRATION_URL`** (**`alembic/env.py`**), models under **`infrastructure/databases/models.py`**, and **`Base.metadata`** for autogenerate.
+
+---
+
+## Run the HTTP API locally
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+python -m pip install -r requirements.txt
+uvicorn main:app --reload --host 127.0.0.1 --port 8001
+```
+
+Use **`--port`** that matches your **`LanguageApp-Web`** **`VITE_API_PHRASAL_VERBS_URL`**.
+
+Swagger: **`http://127.0.0.1:8001/docs`** (default `/docs` for FastAPI).
+
+---
+
+## Automated tests
+
+**PyTest** — **`pytest.ini`**, **`tests/`**, **`requirements.txt`** (`pytest`, `pytest-asyncio`).
+
+```bash
+python -m pip install -r requirements.txt
+python -m pytest tests -v
+```
+
+**`tests/conftest.py`** sets minimal environment defaults before **`settings`** imports for modules that validate at import time.
+
+---
+
+## Related repositories
+
+| Project | Relationship |
+| --- | --- |
+| **`LanguageApp-IdentitySvc`** | Issues JWTs consumed here; **`SERVICE_NAME`** must match JWT `roles` keys |
+| **`LanguageApp-Web`** | SPA exercising login + Phrasal Verbs UX |
